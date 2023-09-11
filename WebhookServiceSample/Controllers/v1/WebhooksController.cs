@@ -7,6 +7,7 @@ using SampleWebApiAspNetCore.Helpers;
 using SampleWebApiAspNetCore.Models;
 using SampleWebApiAspNetCore.Repositories;
 using System.Text.Json;
+using System;
 
 namespace SampleWebApiAspNetCore.Controllers.v1
 {
@@ -61,7 +62,8 @@ namespace SampleWebApiAspNetCore.Controllers.v1
             }
 
             WebhookEntity toAdd = _mapper.Map<WebhookEntity>(webhookCreateDto);
-
+            toAdd.Created = DateTime.UtcNow;
+            
             _webhookRepository.Add(toAdd);
 
             if (!_webhookRepository.Save())
