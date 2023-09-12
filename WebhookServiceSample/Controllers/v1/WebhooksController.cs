@@ -1,13 +1,14 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using SampleWebApiAspNetCore.Dtos;
 using SampleWebApiAspNetCore.Entities;
 using SampleWebApiAspNetCore.Helpers;
 using SampleWebApiAspNetCore.Models;
 using SampleWebApiAspNetCore.Repositories;
+using System.Runtime.InteropServices;
 using System.Text.Json;
-using System;
 
 namespace SampleWebApiAspNetCore.Controllers.v1
 {
@@ -32,6 +33,9 @@ namespace SampleWebApiAspNetCore.Controllers.v1
         {
             List<WebhookEntity> webhookItems = _webhookRepository.GetAll(queryParameters).ToList();
 
+            // mapper doesn't support complex types, so hack to deserialize everytime
+            webhookItems.ForEach(w => w.PivotParsed = JsonConvert.DeserializeObject<Dictionary<string, string>>(w.Pivot) ?? new Dictionary<string, string>());
+            
             var allItemCount = _webhookRepository.Count();
 
             return Ok(webhookItems);
@@ -50,6 +54,9 @@ namespace SampleWebApiAspNetCore.Controllers.v1
 
             WebhookDto item = _mapper.Map<WebhookDto>(webhookItem);
 
+            // mapper doesn't support complex types, so hack to deserialize everytime
+            item.PivotParsed = JsonConvert.DeserializeObject<Dictionary<string, string>>(webhookItem.Pivot) ?? new Dictionary<string, string>();
+
             return Ok(item);
         }
 
@@ -62,8 +69,12 @@ namespace SampleWebApiAspNetCore.Controllers.v1
             }
 
             WebhookEntity toAdd = _mapper.Map<WebhookEntity>(webhookCreateDto);
-            toAdd.Created = DateTime.UtcNow;
             
+            if (!string.IsNullOrEmpty(webhookCreateDto.Pivot))
+            {
+                toAdd.PivotParsed = JsonConvert.DeserializeObject<Dictionary<string, string>>(webhookCreateDto.Pivot) ?? new Dictionary<string, string>();
+            }
+
             _webhookRepository.Add(toAdd);
 
             if (!_webhookRepository.Save())
@@ -93,7 +104,7 @@ namespace SampleWebApiAspNetCore.Controllers.v1
 
             if (!_webhookRepository.Save())
             {
-                throw new Exception("Deleting a fooditem failed on save.");
+                throw new Exception("Deleting a webhookitem failed on save.");
             }
 
             return NoContent();
