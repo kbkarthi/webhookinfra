@@ -7,6 +7,9 @@ using SampleWebApiAspNetCore.Entities;
 using SampleWebApiAspNetCore.Helpers;
 using SampleWebApiAspNetCore.Models;
 using SampleWebApiAspNetCore.Repositories;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using WebhookServiceSample.Auth;
@@ -119,6 +122,45 @@ namespace SampleWebApiAspNetCore.Controllers.v1
             }
 
             return NoContent();
+        }
+
+        [HttpPost]
+        [Route("TriggerCallback", Name = nameof(TriggerWebhookCallback))]
+        public async Task<ActionResult<WebhookDto>> TriggerWebhookCallback(ApiVersion version, [FromBody] WebhookCallbackDto webhookCallbackDto)
+        {
+            if (webhookCallbackDto == null)
+            {
+                return BadRequest();
+            }
+        
+            WebhookEntity webhookItem = _webhookRepository.GetSingle(webhookCallbackDto.Id);
+            if (webhookItem == null)
+            {
+                return NotFound($"Do not find webhook for {webhookCallbackDto.Id}");
+            }
+        
+            HttpClient httpClient = new HttpClient();
+            httpClient.BaseAddress = new Uri(webhookItem.CallBackUrl);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+        
+            HttpResponseMessage response = null;
+            if (webhookCallbackDto.Method == HttpMethod.Post)
+            {
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                response = await httpClient.PostAsJsonAsync("", webhookCallbackDto.Callbackdata);
+            }
+            else if (webhookCallbackDto.Method == HttpMethod.Get)
+            {
+                response = await httpClient.GetAsync("");
+            }
+        
+            if (response == null)
+            {
+                return Ok("response null, Callback not performed");
+            }
+        
+            response.EnsureSuccessStatusCode();
+            return Ok(response.Content);
         }
     }
 }
