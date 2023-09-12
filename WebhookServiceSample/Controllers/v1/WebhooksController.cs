@@ -9,6 +9,7 @@ using SampleWebApiAspNetCore.Models;
 using SampleWebApiAspNetCore.Repositories;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using WebhookServiceSample.Auth;
 
 namespace SampleWebApiAspNetCore.Controllers.v1
 {
@@ -26,6 +27,16 @@ namespace SampleWebApiAspNetCore.Controllers.v1
         {
             _webhookRepository = webhookRepository;
             _mapper = mapper;
+        }
+
+        [HttpGet]
+        [Route("/token", Name = nameof(GetToken))]
+        public async Task<ActionResult> GetToken(ApiVersion version)
+        {
+            AadTokenManager tokenManager = AadTokenManager.GetInstance();
+            var token = await tokenManager.GetAadTokenAsync();
+
+            return Ok(token);
         }
 
         [HttpGet(Name = nameof(GetAllWebhooks))]
