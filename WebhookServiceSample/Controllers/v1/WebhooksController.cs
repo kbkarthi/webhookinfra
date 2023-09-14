@@ -6,6 +6,7 @@ using SampleWebApiAspNetCore.Entities;
 using SampleWebApiAspNetCore.Models;
 using SampleWebApiAspNetCore.Repositories;
 using System.Net.Http.Headers;
+using System.Text;
 using WebhookServiceSample.Auth;
 using WebhookServiceSample.Dtos;
 
@@ -145,7 +146,9 @@ namespace SampleWebApiAspNetCore.Controllers.v1
             if (webhookCallbackDto.Method == HttpMethod.Post)
             {
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                response = await httpClient.PostAsJsonAsync("", webhookCallbackDto.Callbackdata);
+
+                var httpContent = new StringContent(JsonConvert.SerializeObject(webhookCallbackDto.Callbackdata), Encoding.UTF8, "application/json");
+                response = await httpClient.PostAsync("", httpContent);
             }
             else if (webhookCallbackDto.Method == HttpMethod.Get)
             {
