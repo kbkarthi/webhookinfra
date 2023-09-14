@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using WebhookServiceSample.Dtos;
 
 namespace SampleWebApiAspNetCore.Dtos
 {
@@ -10,6 +11,6 @@ namespace SampleWebApiAspNetCore.Dtos
         [Required]
         public HttpMethod Method { get; set; }
 
-        public string Callbackdata { get; set; }
+        public DeviceDTO[] Callbackdata { get; set; }
     }
 }

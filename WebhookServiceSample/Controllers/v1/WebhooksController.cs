@@ -7,6 +7,7 @@ using SampleWebApiAspNetCore.Models;
 using SampleWebApiAspNetCore.Repositories;
 using System.Net.Http.Headers;
 using WebhookServiceSample.Auth;
+using WebhookServiceSample.Dtos;
 
 namespace SampleWebApiAspNetCore.Controllers.v1
 {
@@ -162,7 +163,7 @@ namespace SampleWebApiAspNetCore.Controllers.v1
 
         [HttpGet]
         [Route("GetAPIData", Name = nameof(GetAPIData))]
-        public async Task<ActionResult<string>> GetAPIData(ApiVersion version)
+        public async Task<ActionResult<SearchDTO>> GetAPIData(ApiVersion version)
         {
             AadTokenManager tokenManager = AadTokenManager.GetInstance(_config);
             var token = await tokenManager.GetAadTokenAsync();
@@ -179,7 +180,9 @@ namespace SampleWebApiAspNetCore.Controllers.v1
 
             string responseBody = await response.Content.ReadAsStringAsync();
 
-            return Ok(responseBody);
+            SearchDTO searchResult = JsonConvert.DeserializeObject<SearchDTO>(responseBody);
+
+            return Ok(searchResult.Value);
         }
     }
 }

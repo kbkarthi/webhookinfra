@@ -5,7 +5,7 @@
 
     public class AadTokenManager
     {
-        private IConfidentialClientApplication AppInstance;
+        private readonly IConfidentialClientApplication AppInstance;
         private readonly IConfigurationRoot _config;
         private static AadTokenManager TokenManagerInstance;
 
