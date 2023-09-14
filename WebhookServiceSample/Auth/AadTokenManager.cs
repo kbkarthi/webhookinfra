@@ -5,33 +5,30 @@
 
     public class AadTokenManager
     {
-        private string ClientId = "";
-        private string ClientSecret = "";
-        private string TenantId = "";
-
         private IConfidentialClientApplication AppInstance;
-
+        private readonly IConfigurationRoot _config;
         private static AadTokenManager TokenManagerInstance;
 
-        public static AadTokenManager GetInstance()
+        public static AadTokenManager GetInstance(IConfigurationRoot config)
         {
             if (TokenManagerInstance == null)
             {
-                TokenManagerInstance = new AadTokenManager();
+                TokenManagerInstance = new AadTokenManager(config);
             }
 
             return TokenManagerInstance;
         }
 
-        private AadTokenManager()
+        private AadTokenManager(IConfigurationRoot config)
         {
-            AppInstance = ConfidentialClientApplicationBuilder.Create(ClientId).WithClientSecret(ClientSecret).Build();
+            _config = config;
+            AppInstance = ConfidentialClientApplicationBuilder.Create(_config["ClientId"]).WithClientSecret(_config["ClientSecret"]).Build();
         }
 
         public async Task<string> GetAadTokenAsync()
         {
             var authResult = await AppInstance.AcquireTokenForClient(scopes: new[] { "https://canary.graph.microsoft.com/.default" })
-                               .WithAuthority(AzureCloudInstance.AzurePublic, TenantId)
+                               .WithAuthority(AzureCloudInstance.AzurePublic, _config["TenantId"])
                                .ExecuteAsync();
             return authResult.AccessToken;
         }

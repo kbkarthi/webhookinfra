@@ -1,17 +1,11 @@
 using AutoMapper;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using SampleWebApiAspNetCore.Dtos;
 using SampleWebApiAspNetCore.Entities;
-using SampleWebApiAspNetCore.Helpers;
 using SampleWebApiAspNetCore.Models;
 using SampleWebApiAspNetCore.Repositories;
-using System.Net;
-using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Runtime.InteropServices;
-using System.Text.Json;
 using WebhookServiceSample.Auth;
 
 namespace SampleWebApiAspNetCore.Controllers.v1
@@ -23,20 +17,23 @@ namespace SampleWebApiAspNetCore.Controllers.v1
     {
         private readonly IWebhookRepository _webhookRepository;
         private readonly IMapper _mapper;
+        private readonly IConfigurationRoot _config;
 
         public WebhooksController(
             IWebhookRepository webhookRepository,
-            IMapper mapper)
+            IMapper mapper,
+            IConfigurationRoot config)
         {
             _webhookRepository = webhookRepository;
             _mapper = mapper;
+            _config = config;
         }
 
         [HttpGet]
-        [Route("/token", Name = nameof(GetToken))]
+        [Route("token", Name = nameof(GetToken))]
         public async Task<ActionResult> GetToken(ApiVersion version)
         {
-            AadTokenManager tokenManager = AadTokenManager.GetInstance();
+            AadTokenManager tokenManager = AadTokenManager.GetInstance(_config);
             var token = await tokenManager.GetAadTokenAsync();
 
             return Ok(token);
@@ -49,7 +46,7 @@ namespace SampleWebApiAspNetCore.Controllers.v1
 
             // mapper doesn't support complex types, so hack to deserialize everytime
             webhookItems.ForEach(w => w.PivotParsed = JsonConvert.DeserializeObject<Dictionary<string, string>>(w.Pivot) ?? new Dictionary<string, string>());
-            
+
             var allItemCount = _webhookRepository.Count();
 
             return Ok(webhookItems);
@@ -83,7 +80,7 @@ namespace SampleWebApiAspNetCore.Controllers.v1
             }
 
             WebhookEntity toAdd = _mapper.Map<WebhookEntity>(webhookCreateDto);
-            
+
             if (!string.IsNullOrEmpty(webhookCreateDto.Pivot))
             {
                 toAdd.PivotParsed = JsonConvert.DeserializeObject<Dictionary<string, string>>(webhookCreateDto.Pivot) ?? new Dictionary<string, string>();
@@ -132,17 +129,17 @@ namespace SampleWebApiAspNetCore.Controllers.v1
             {
                 return BadRequest();
             }
-        
+
             WebhookEntity webhookItem = _webhookRepository.GetSingle(webhookCallbackDto.Id);
             if (webhookItem == null)
             {
                 return NotFound($"Do not find webhook for {webhookCallbackDto.Id}");
             }
-        
+
             HttpClient httpClient = new HttpClient();
             httpClient.BaseAddress = new Uri(webhookItem.CallBackUrl);
             httpClient.DefaultRequestHeaders.Accept.Clear();
-        
+
             HttpResponseMessage response = null;
             if (webhookCallbackDto.Method == HttpMethod.Post)
             {
@@ -153,14 +150,36 @@ namespace SampleWebApiAspNetCore.Controllers.v1
             {
                 response = await httpClient.GetAsync("");
             }
-        
+
             if (response == null)
             {
                 return Ok("response null, Callback not performed");
             }
-        
+
             response.EnsureSuccessStatusCode();
             return Ok(response.Content);
+        }
+
+        [HttpGet]
+        [Route("GetAPIData", Name = nameof(GetAPIData))]
+        public async Task<ActionResult<string>> GetAPIData(ApiVersion version)
+        {
+            AadTokenManager tokenManager = AadTokenManager.GetInstance(_config);
+            var token = await tokenManager.GetAadTokenAsync();
+
+            HttpClient httpClient = new();
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            HttpResponseMessage response = await httpClient.GetAsync("https://canary.graph.microsoft.com/testprodbeta_Intune_SH/deviceManagement/managedDevices?$filter=complianceState%20eq%20'noncompliant'&$select=id,complianceGracePeriodExpirationDateTime,deviceName");
+
+            response.EnsureSuccessStatusCode();
+
+            string responseBody = await response.Content.ReadAsStringAsync();
+
+            return Ok(responseBody);
         }
     }
 }
