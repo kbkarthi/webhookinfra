@@ -2,6 +2,8 @@
 {
     using Microsoft.Identity.Client;
     using System.Threading.Tasks;
+    using Azure.Identity;
+    using Azure.Security.KeyVault.Secrets;
 
     public class AadTokenManager
     {
@@ -13,18 +15,27 @@
 
         private static AadTokenManager TokenManagerInstance;
 
-        public static AadTokenManager GetInstance()
+        public static AadTokenManager GetInstance(bool usingKv = false)
         {
             if (TokenManagerInstance == null)
             {
-                TokenManagerInstance = new AadTokenManager();
+                TokenManagerInstance = new AadTokenManager(usingKv);
             }
 
             return TokenManagerInstance;
         }
 
-        private AadTokenManager()
+        private AadTokenManager(bool usingKv = false)
         {
+            if (usingKv)
+            {
+                var kvUri = "https://kabaluwebhookkv.vault.azure.net/";
+                var client = new SecretClient(new Uri(kvUri), new DefaultAzureCredential());
+                this.ClientId = Task.Run(() => client.GetSecretAsync(nameof(ClientId))).Result?.Value?.Value ?? "";
+                this.ClientSecret = Task.Run(() => client.GetSecretAsync(nameof(ClientSecret))).Result?.Value?.Value ?? "";
+                this.TenantId = Task.Run(() => client.GetSecretAsync(nameof(TenantId))).Result?.Value?.Value ?? "";
+            }
+
             AppInstance = ConfidentialClientApplicationBuilder.Create(ClientId).WithClientSecret(ClientSecret).Build();
         }
 

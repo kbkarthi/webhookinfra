@@ -42,6 +42,16 @@ namespace SampleWebApiAspNetCore.Controllers.v1
             return Ok(token);
         }
 
+        [HttpGet]
+        [Route("/tokenv2", Name = nameof(GetTokenV2))]
+        public async Task<ActionResult> GetTokenV2(ApiVersion version)
+        {
+            AadTokenManager tokenManager = AadTokenManager.GetInstance(true);
+            var token = await tokenManager.GetAadTokenAsync();
+
+            return Ok(token);
+        }
+
         [HttpGet(Name = nameof(GetAllWebhooks))]
         public ActionResult GetAllWebhooks(ApiVersion version, [FromQuery] QueryParameters queryParameters)
         {
