@@ -9,6 +9,8 @@ using SampleWebApiAspNetCore.Helpers;
 using SampleWebApiAspNetCore.MappingProfiles;
 using SampleWebApiAspNetCore.Repositories;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using WebhookServiceSample.Repositories;
+using WebhookServiceSample.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +30,11 @@ builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwa
 var configBuilder = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
     .AddJsonFile("appsettings.Development.json", optional: true);
-builder.Services.AddSingleton(configBuilder.AddEnvironmentVariables().Build());
+var appSettings = configBuilder.AddEnvironmentVariables().Build();
+builder.Services.AddSingleton(appSettings);
+
+builder.Services.AddSingleton<ApiDataRepository>();
+builder.Services.AddSingleton<DataAggregateService>();
 
 builder.Services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 builder.Services.AddSingleton<IUrlHelperFactory, UrlHelperFactory>();

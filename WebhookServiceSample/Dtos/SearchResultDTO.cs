@@ -1,6 +1,6 @@
 ﻿namespace WebhookServiceSample.Dtos
 {
-    public class SearchDTO
+    public class SearchResultDTO
     {
         public DeviceDTO[] Value { get; set; }
     }

@@ -9,6 +9,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using WebhookServiceSample.Auth;
 using WebhookServiceSample.Dtos;
+using WebhookServiceSample.Repositories;
+using WebhookServiceSample.Services;
 
 namespace SampleWebApiAspNetCore.Controllers.v1
 {
@@ -20,15 +22,18 @@ namespace SampleWebApiAspNetCore.Controllers.v1
         private readonly IWebhookRepository _webhookRepository;
         private readonly IMapper _mapper;
         private readonly IConfigurationRoot _config;
+        private readonly DataAggregateService _dataAggregateService;
 
         public WebhooksController(
             IWebhookRepository webhookRepository,
             IMapper mapper,
-            IConfigurationRoot config)
+            IConfigurationRoot config,
+            DataAggregateService dataAggregateService)
         {
             _webhookRepository = webhookRepository;
             _mapper = mapper;
             _config = config;
+            _dataAggregateService = dataAggregateService;
         }
 
         [HttpGet]
@@ -98,6 +103,8 @@ namespace SampleWebApiAspNetCore.Controllers.v1
             WebhookEntity newWebhookItem = _webhookRepository.GetSingle(toAdd.Id);
             WebhookDto webhookDto = _mapper.Map<WebhookDto>(newWebhookItem);
 
+            _dataAggregateService.Subscribe(toAdd);
+
             return CreatedAtRoute(nameof(GetSingleWebhook),
                 new { version = version.ToString(), id = newWebhookItem.Id }, webhookDto);
         }
@@ -119,6 +126,8 @@ namespace SampleWebApiAspNetCore.Controllers.v1
             {
                 throw new Exception("Deleting a webhookitem failed on save.");
             }
+
+            _dataAggregateService.Unsubscribe(id);
 
             return NoContent();
         }
@@ -166,26 +175,12 @@ namespace SampleWebApiAspNetCore.Controllers.v1
 
         [HttpGet]
         [Route("GetAPIData", Name = nameof(GetAPIData))]
-        public async Task<ActionResult<SearchDTO>> GetAPIData(ApiVersion version)
+        public async Task<ActionResult<SearchResultDTO>> GetAPIData(ApiVersion version)
         {
-            AadTokenManager tokenManager = AadTokenManager.GetInstance(_config);
-            var token = await tokenManager.GetAadTokenAsync();
+            var apiDataRepository = new ApiDataRepository(_config);
+            var searchResult = await apiDataRepository.GetReportingDataAsync();
 
-            HttpClient httpClient = new();
-            httpClient.DefaultRequestHeaders.Accept.Clear();
-
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            HttpResponseMessage response = await httpClient.GetAsync("https://canary.graph.microsoft.com/testprodbeta_Intune_SH/deviceManagement/managedDevices?$filter=complianceState%20eq%20'noncompliant'&$select=id,complianceGracePeriodExpirationDateTime,deviceName");
-
-            response.EnsureSuccessStatusCode();
-
-            string responseBody = await response.Content.ReadAsStringAsync();
-
-            SearchDTO searchResult = JsonConvert.DeserializeObject<SearchDTO>(responseBody);
-
-            return Ok(searchResult.Value);
+            return Ok(searchResult);
         }
     }
 }
