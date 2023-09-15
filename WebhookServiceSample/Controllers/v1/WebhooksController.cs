@@ -23,6 +23,7 @@ namespace SampleWebApiAspNetCore.Controllers.v1
         private readonly IMapper _mapper;
         private readonly IConfigurationRoot _config;
         private readonly DataAggregateService _dataAggregateService;
+        private readonly string _key = "9ZzVbIm0bEeS63RWHWQ8irilQN022mmay9ac91qQzj1lAzFu5l9BKQ==";
 
         public WebhooksController(
             IWebhookRepository webhookRepository,
@@ -81,7 +82,7 @@ namespace SampleWebApiAspNetCore.Controllers.v1
         [HttpPost(Name = nameof(AddWebhook))]
         public ActionResult<WebhookDto> AddWebhook(ApiVersion version, [FromBody] WebhookCreateDto webhookCreateDto)
         {
-            if (webhookCreateDto == null)
+            if (webhookCreateDto == null || _key != webhookCreateDto.Key)
             {
                 return BadRequest();
             }

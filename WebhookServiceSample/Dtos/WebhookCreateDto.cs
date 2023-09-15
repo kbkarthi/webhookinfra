@@ -9,5 +9,6 @@ namespace SampleWebApiAspNetCore.Dtos
         public string WebhookType { get; set; }
         public string Pivot { get; set; }
         public DateTime Created { get; set; }
+        public string Key { get; set; }
     }
 }

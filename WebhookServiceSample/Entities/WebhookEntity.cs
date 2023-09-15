@@ -11,6 +11,9 @@ namespace SampleWebApiAspNetCore.Entities
 
         [NotMapped]
         public IDictionary<string, string> PivotParsed {  get; set; }
+
+        [NotMapped]
+        public string Key { get; set; }
         public DateTime Created { get; set; }
     }
 }
