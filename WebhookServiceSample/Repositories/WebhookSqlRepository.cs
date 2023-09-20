@@ -19,11 +19,6 @@ namespace SampleWebApiAspNetCore.Repositories
             return _webhookDbContext.WebhookItems.FirstOrDefault(x => x.Id == id);
         }
 
-        public NotificationEntity GetSingle(string id)
-        {
-            return _webhookDbContext.NotificationItems.FirstOrDefault(x => x.Id == id);    
-        }
-
         public void Add(WebhookEntity item)
         {
             _webhookDbContext.WebhookItems.Add(item);
