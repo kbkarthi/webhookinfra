@@ -11,5 +11,6 @@ namespace SampleWebApiAspNetCore.Repositories
         }
 
         public DbSet<WebhookEntity> WebhookItems { get; set; } = null!;
+        public DbSet<NotificationEntity> NotificationItems { get; set; } = null!;
     }
 }
