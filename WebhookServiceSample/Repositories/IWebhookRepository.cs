@@ -6,7 +6,6 @@ namespace SampleWebApiAspNetCore.Repositories
     public interface IWebhookRepository
     {
         WebhookEntity GetSingle(int id);
-        NotificationEntity GetSingle(String id);
         void Add(WebhookEntity item);
         void Add(NotificationEntity item);
         void Delete(int id);

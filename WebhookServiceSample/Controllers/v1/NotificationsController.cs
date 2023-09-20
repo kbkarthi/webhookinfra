@@ -78,9 +78,12 @@ namespace SampleWebApiAspNetCore.Controllers.v1
                     {
                         Console.WriteLine($"Received notification: '{notification.Resource}', {notification.ResourceData.AdditionalData["id"]}");
                         NotificationEntity toAdd = new NotificationEntity();
-                        toAdd.Id = notification.ResourceData.AdditionalData["id"].ToString() ?? "";
+                        toAdd.SubscriptionId = notification.SubscriptionId.ToString() ?? "";
+                        toAdd.ResourceId = notification.ResourceData.AdditionalData["id"].ToString() ?? "";
                         toAdd.Resource = notification.Resource;
+                        toAdd.Content = JsonSerializer.Serialize(notification); 
                         _webhookRepository.Add(toAdd);
+                        _webhookRepository.Save();
                     }
                 }
             }

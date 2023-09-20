@@ -2,8 +2,14 @@ namespace SampleWebApiAspNetCore.Entities
 {
     public class NotificationEntity
     {
-        public string Id { get; set; }
+        public int Id { get; set; }
+
+        public string SubscriptionId { get; set; }
+
+        public string ResourceId { get; set; }
 
         public string Resource { get; set; }
+
+        public string Content { get; set; }
     }
 }
