@@ -19,9 +19,19 @@ namespace SampleWebApiAspNetCore.Repositories
             return _webhookDbContext.WebhookItems.FirstOrDefault(x => x.Id == id);
         }
 
+        public NotificationEntity GetSingle(string id)
+        {
+            return _webhookDbContext.NotificationItems.FirstOrDefault(x => x.Id == id);    
+        }
+
         public void Add(WebhookEntity item)
         {
             _webhookDbContext.WebhookItems.Add(item);
+        }
+
+        public void Add(NotificationEntity item)
+        {
+            _webhookDbContext.NotificationItems.Add(item);  
         }
 
         public void Delete(int id)
@@ -33,6 +43,13 @@ namespace SampleWebApiAspNetCore.Repositories
         public IQueryable<WebhookEntity> GetAll(QueryParameters queryParameters)
         {
             IQueryable<WebhookEntity> _allItems = _webhookDbContext.WebhookItems;
+
+            return _allItems;
+        }
+
+        public IQueryable<NotificationEntity> GetAll()
+        {
+            IQueryable<NotificationEntity> _allItems = _webhookDbContext.NotificationItems;
 
             return _allItems;
         }

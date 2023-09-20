@@ -2,3 +2,5 @@
 /.idea/*
 /bin/*
 /obj/*
+WebhookServiceSample/bin/*
+WebhookServiceSample/obj/*
